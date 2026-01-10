@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokeAPI - Explorador de Pokémon</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔴</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .pokemon-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .pokemon-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 4px;
+            text-transform: capitalize;
+        }
+
+        .type-normal { background-color: #A8A878; color: white; }
+        .type-fire { background-color: #F08030; color: white; }
+        .type-water { background-color: #6890F0; color: white; }
+        .type-electric { background-color: #F8D030; color: #333; }
+        .type-grass { background-color: #78C850; color: white; }
+        .type-ice { background-color: #98D8D8; color: #333; }
+        .type-fighting { background-color: #C03028; color: white; }
+        .type-poison { background-color: #A040A0; color: white; }
+        .type-ground { background-color: #E0C068; color: #333; }
+        .type-flying { background-color: #A890F0; color: white; }
+        .type-psychic { background-color: #F85888; color: white; }
+        .type-bug { background-color: #A8B820; color: white; }
+        .type-rock { background-color: #B8A038; color: white; }
+        .type-ghost { background-color: #705898; color: white; }
+        .type-dragon { background-color: #7038F8; color: white; }
+        .type-dark { background-color: #705848; color: white; }
+        .type-steel { background-color: #B8B8D0; color: #333; }
+        .type-fairy { background-color: #EE99AC; color: #333; }
+
+        .stat-bar {
+            background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%);
+            border-radius: 4px;
+            height: 6px;
+            margin: 4px 0;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ef4444;
+            margin: 0 2px;
+            animation: pulse 1.4s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .header-gradient {
+            background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- Header -->
+    <header class="header-gradient text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-4xl">🔴</span>
+                    <div>
+                        <h1 class="text-3xl font-bold">PokeAPI Explorer</h1>
+                        <p class="text-orange-100 text-sm">Descubre y explora el mundo Pokémon</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="container mx-auto px-4 py-8">
+
+        <!-- Sección de Búsqueda y Filtros -->
+        <section class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🔍 Buscar y Filtrar</h2>
+            
+            <!-- Primera fila: Búsqueda -->
+            <div class="mb-4 flex flex-col md:flex-row gap-2">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Buscar por nombre</label>
+                    <div class="flex gap-2">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="ej: pikachu"
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                        >
+                        <button 
+                            onclick="searchPokemon()"
+                            class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition whitespace-nowrap"
+                        >
+                            Buscar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Segunda fila: Filtros y controles -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Filtro por tipo -->
+                <div class="relative z-10">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Filtrar por tipo</label>
+                    <select 
+                        id="typeFilter"
+                        onchange="filterByType()"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
+                    >
+                        <option value="">Todos los tipos</option>
+                    </select>
+                </div>
+
+                <!-- Paginación -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Pokémon por página</label>
+                    <select 
+                        id="limitSelect"
+                        onchange="changeLimit()"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
+                    >
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="40">40</option>
+                        <option value="60">60</option>
+                    </select>
+                </div>
+
+                <!-- Botón para listar todos -->
+                <div class="flex items-end">
+                    <button 
+                        onclick="loadPokemonList()"
+                        class="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition"
+                    >
+                        Listar Pokémon
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de Resultados -->
+        <section id="resultsSection" class="mb-8">
+            <!-- Detalles del Pokémon individual (oculto inicialmente) -->
+            <div id="detailsContainer" class="hidden"></div>
+
+            <!-- Grid de Pokémon -->
+            <div id="pokemonGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Los pokémon se cargarán aquí -->
+            </div>
+        </section>
+
+        <!-- Controles de Paginación -->
+        <div id="paginationContainer" class="flex justify-center items-center gap-4 my-8">
+            <button 
+                onclick="previousPage()"
+                class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50"
+                id="prevBtn"
+            >
+                ← Anterior
+            </button>
+            <span id="pageInfo" class="text-gray-700 font-medium">Página 1</span>
+            <button 
+                onclick="nextPage()"
+                class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition"
+                id="nextBtn"
+            >
+                Siguiente →
+            </button>
+        </div>
+
+        <!-- Sección de Información -->
+        <section class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg mb-8">
+            <h3 class="text-lg font-bold text-blue-900 mb-2">💡 Información</h3>
+            <p class="text-blue-800">
+                Esta aplicación consume datos de <a href="https://pokeapi.co/" target="_blank" class="text-blue-600 font-bold hover:underline">PokeAPI</a>, 
+                una API REST pública que proporciona información sobre todos los Pokémon, sus tipos, habilidades y estadísticas.
+            </p>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="mb-2"></p>
+            <p class="text-gray-400 text-sm">© 2026 Edwin - Actividad 9 | Sistema Web con APIs</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
